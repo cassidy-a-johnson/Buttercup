@@ -34,7 +34,7 @@ if [ "$(ls -A ./genomic_data/10x)" ]; then
 elif [ "$(ls -A ./genomic_data/pacbio_hifi)" ]; then
     readlink -f /fAloSap1/genomic_data/pacbio_hifi > fAloSap1_abs_path.ls
     ls ./genomic_data/pacbio_hifi/*.fastq.gz > R.fofn
-        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R.fofn summary vgl
+        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R.fofn output vgl
 else
     readlink -f /fAloSap1/genomic_data/illumina > fAloSap1_abs_path.ls
     ls ./genomic_data/illumina/*R1.fastq.gz > R1.fofn
