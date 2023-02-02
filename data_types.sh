@@ -21,6 +21,12 @@
 ##DIR="/genomic_data/10x"
 ##do i even need to make a variable here?
 
+LINE=($(sed -n  ${SLURM_ARRAY_TASK_ID}p ${1}))
+ 
+echo $LINE
+NAME=${LINE[0]}
+ID=${LINE[1]}
+
 
 mkdir -p meryl
 
@@ -28,15 +34,16 @@ mkdir -p meryl
 
 # look for empty dir 
 if [ "$(ls -A ./genomic_data/10x)" ]; then
-    ls ./genomic_data/10x/*R1*.fastq.gz > R1.fofn
-    ls ./genomic_data/10x/*R2*.fastq.gz > R2.fofn
-        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGP_PIPELINE/meryl2/_submit_meryl2_10x.sh 21 R1.fofn R2.fofn ${meryl} vgl
+    #ls ./genomic_data/10x/*R1*.fastq.gz > R1.fofn
+    #ls ./genomic_data/10x/*R2*.fastq.gz > R2.fofn
+    ls ./genomic_data/10x/*R*.fastq.gz > input.fofn
+        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGL0STORE/bin/Merqury_QV_slurm/_submit_meryl2_10x_cjohnson02.sh 21 summary vgl
 elif [ "$(ls -A ./genomic_data/pacbio_hifi)" ]; then
-    readlink -f /fAloSap1/genomic_data/pacbio_hifi > fAloSap1_abs_path.ls
+    readlink -f /${ID}/genomic_data/pacbio_hifi > ${ID}_abs_path.ls
     ls ./genomic_data/pacbio_hifi/*.fastq.gz > R.fofn
         sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R.fofn summary vgl
 else
-    readlink -f /fAloSap1/genomic_data/illumina > fAloSap1_abs_path.ls
+    readlink -f /${ID}/genomic_data/illumina > ${ID}_abs_path.ls
     ls ./genomic_data/illumina/*R1.fastq.gz > R1.fofn
     ls ./genomic_data/illumina/*R2.fastq.gz > R2.fofn
         sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R1.fofn R2.fofn summary vgl
@@ -82,10 +89,12 @@ fi      ##REMEMBER TO ADD THE SBATCH WHEN PUTTING IN DW_QV.SH
     #files to the meryl directory
     #this would come right after the meryl sbatch
     #there is no place to designate location of output in the _build_meryl script
-mv *.meryl meryl
-mv *.jid meryl
-mv *.meryl.hist meryl
-mv *.meryl.list meryl
+
+#mv *.meryl meryl
+#mv *.jid meryl
+#mv *.meryl.hist meryl
+#mv *.meryl.list meryl
+
 #will leave .fofn in species directory
 #will leave slurm_.out files in species directory
 
