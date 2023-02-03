@@ -37,20 +37,28 @@ if [ "$(ls -A ./genomic_data/10x)" ]; then
     #ls ./genomic_data/10x/*R1*.fastq.gz > R1.fofn
     #ls ./genomic_data/10x/*R2*.fastq.gz > R2.fofn
     ls ./genomic_data/10x/*R*.fastq.gz > input.fofn
-        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGL0STORE/bin/Merqury_QV_slurm/_submit_meryl2_10x_cjohnson02.sh 21 summary vgl
+        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGL0STORE/bin/Merqury_QV_slurm/_submit_meryl2_10x_cj.sh 21 summary vgl | awk '{print $4}' > meryl.id
 elif [ "$(ls -A ./genomic_data/pacbio_hifi)" ]; then
-    readlink -f /${ID}/genomic_data/pacbio_hifi > ${ID}_abs_path.ls
+    #readlink -f /${ID}/genomic_data/pacbio_hifi > ${ID}_abs_path.ls
     ls ./genomic_data/pacbio_hifi/*.fastq.gz > R.fofn
-        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R.fofn summary vgl
+        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R.fofn summary vgl | awk '{print $4}' > meryl.id
 else
-    readlink -f /${ID}/genomic_data/illumina > ${ID}_abs_path.ls
+    #readlink -f /${ID}/genomic_data/illumina > ${ID}_abs_path.ls
     ls ./genomic_data/illumina/*R1.fastq.gz > R1.fofn
     ls ./genomic_data/illumina/*R2.fastq.gz > R2.fofn
-        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R1.fofn R2.fofn summary vgl
-fi      ##REMEMBER TO ADD THE SBATCH WHEN PUTTING IN DW_QV.SH
+        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R1.fofn R2.fofn summary vgl | awk '{print $4}' > meryl.id
+fi      
 
-##NOTE: next step is add absolute path generation
-##REMEMBER TO EDIT PATH INSIDE _submit_merl2_10x.sh
+mv logs ./meryl/
+mv *.jid ./meryl/
+mv *.meryl.hist ./meryl/
+mv *.meryl.list ./meryl/
+
+##remove the raw reads:
+#make sure rm -v
+#wrapper to ensure meryldb has been generated before removing raw reads
+rm -drv ./genomic_data/
+
 
 
 ##Meryl tools to run:
