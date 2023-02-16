@@ -2,6 +2,8 @@
 
 ##This is a working script to write the program for differentiating data types (illumina, hifi, 10x) for 2 parts of the script:
 
+#SHOULD EVENTUALLY CHANGE TO DW_MERYL.SH
+
 #1. WHICH PATH TO PROVIDE FOR MERYL
 #2. WHICH MERYL TO RUN
     #check if a directory is empty (10x OR hifi illumina); so only check if 10x is empty
@@ -33,31 +35,42 @@ mkdir -p meryl
 ##NEED to create a path variable
 
 # look for empty dir 
-if [ "$(ls -A ./genomic_data/10x)" ]; then
-    #ls ./genomic_data/10x/*R1*.fastq.gz > R1.fofn
-    #ls ./genomic_data/10x/*R2*.fastq.gz > R2.fofn
+ if test -n "$(find ./genomic_data/pacbio_hifi/ -maxdepth 0 -empty)" ; then
+    echo "No pacbio hifi data"
+else    
+    echo "${ID} has pacbio hifi genomic data" > Pacbio_hifi
+    cat Pacbio_hifi
     ls ./genomic_data/10x/*R*.fastq.gz > input.fofn
-        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGL0STORE/bin/Merqury_QV_slurm/_submit_meryl2_10x_cj.sh 21 summary vgl | awk '{print $4}' > meryl.id
-elif [ "$(ls -A ./genomic_data/pacbio_hifi)" ]; then
-    #readlink -f /${ID}/genomic_data/pacbio_hifi > ${ID}_abs_path.ls
+        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGL0STORE/bin/Merqury_QV_slurm/_submit_meryl2_10x_cj.sh 21 summary vgl 32 | awk '{print $4}' > meryl.id
+fi
+
+ if test -n "$(find ./genomic_data/pacbio_hifi/ -maxdepth 0 -empty)" ; then
+    echo "No pacbio hifi data"
+else    
+    echo "${ID} has pacbio hifi genomic data" > Pacbio_hifi
+    cat Pacbio_hifi
     ls ./genomic_data/pacbio_hifi/*.fastq.gz > R.fofn
-        sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R.fofn summary vgl | awk '{print $4}' > meryl.id
-else
-    #readlink -f /${ID}/genomic_data/illumina > ${ID}_abs_path.ls
+        sbatch --partition=vgl $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R.fofn summary vgl | awk '{print $4}' > meryl.id
+fi  
+
+ if test -n "$(find ./genomic_data/illumina/ -maxdepth 0 -empty)" ; then
+    echo "No iilumina genomic data data"
+else    
+    echo "${ID} illumina genomic data" > Illumina
+    cat Illumina
     ls ./genomic_data/illumina/*R1.fastq.gz > R1.fofn
     ls ./genomic_data/illumina/*R2.fastq.gz > R2.fofn
         sbatch --partition=vgl --dependency="afterok:$(cat job.id)" $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R1.fofn R2.fofn summary vgl | awk '{print $4}' > meryl.id
-fi      
+fi 
 
-mv logs ./meryl/
-mv *.jid ./meryl/
-mv *.meryl.hist ./meryl/
-mv *.meryl.list ./meryl/
+#mv logs ./meryl/
+#mv *.jid ./meryl/
+#mv *.meryl.hist ./meryl/
+#mv *.meryl.list ./meryl/
 
 ##remove the raw reads:
-#make sure rm -v
 #wrapper to ensure meryldb has been generated before removing raw reads
-rm -drv ./genomic_data/
+#sbatch --partition=vgl --thread-spec=32 --dependency="afterok:$(cat meryl.id)" --wrap=/rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/rm_reads.sh
 
 
 

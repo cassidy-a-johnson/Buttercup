@@ -1,12 +1,35 @@
 #!/bin/bash
 
-mkdir -p Merqury
+LINE=($(sed -n  ${SLURM_ARRAY_TASK_ID}p ${1}))
+ 
+echo $LINE
+NAME=${LINE[0]}
+ID=${LINE[1]}
+URL=${LINE[2]} 
 
-#$tools/merqury/_submit_merqury.sh ${2}.meryl ${2}_10x_reads_R1.fastq.gz ${2}_10x_reads_R2.fastq.gz R1_R2_reads
+mkdir -p ./Merqury_logs
+
+##run qv.sh:
+echo "/
+sbatch --partition=vgl --thread-spec=32 --dependency="afterok:$(cat meryl.id)" --output={$ID}/Merqury_logs/dw.%A_%a.out --error={$ID}/Merqury_logs/dw.%A_%a.out /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/qv.sh summary.meryl *.fna.gz Merqury | awk '{print $4}' > merqury.jid"
+sbatch --partition=vgl --thread-spec=32 --dependency="afterok:$(cat meryl.id)" --output={$ID}/Merqury_logs/dw.%A_%a.out --error={$ID}/Merqury_logs/dw.%A_%a.out /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/qv.sh summary.meryl *.fna.gz Merqury | awk '{print $4}' > merqury.jid
+
+##remove meryl:
+#make sure rm -v
+#wrapper to ensure QV has been generated before removing *.meryl files
+    #Linelle: sbatch --parition=vgl --nodes=1 --cpus-per-task=32 --wrap="meryl whatever"
+sbatch --partition=vgl --thread-spec=32 --dependency="afterok:$(cat merqury.jid)" --wrap=/rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/rm_meryl.sh
+
+
+
+##Worked 2/2/23:
+#sbatch --partition=vgl /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/qv.sh summary.meryl GCA_016904835.1_bAcaChl1.pri_genomic.fna Merqury 
 
 #sbatch --partition=vgl /lustre/fs4/vgl/store/vglshare/tools/VGP-tools/merqury/_submit_merqury.sh mem=F.meryl GCA_018492685.1_fAloSap1.pri_genomic.fna Merqury
 
-##run qv.sh
+##CAUTION: REMEMBER TO GENERALIZE POPULATED INPUT!!!
+##add dependency
+
 #path = /lustre/fs4/vgl/store/vglshare/tools/VGP-tools/merqury/eval/qv.sh
 
 #"Usage: ./qv.sh <read.meryl> <asm1.fasta> [asm2.fasta] <out>"
@@ -19,9 +42,6 @@ mkdir -p Merqury
         #echo "** This script calculates the QV only and exits. **"
         #echo "   Run spectra_cn.sh for full copy number analysis."
 
-
-
-sbatch --partition=vgl /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/qv.sh summary.meryl GCA_016904835.1_bAcaChl1.pri_genomic.fna Merqury 
 
 #<read.meryl> = summary.meryl
 

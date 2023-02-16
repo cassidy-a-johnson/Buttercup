@@ -11,7 +11,7 @@ fi
 # meryl_count=/path/to/meryl/scripts/meryl_count
 meryl_count=$VGP_PIPELINE/meryl2/meryl_count
 
-ls ./genomic_data/10x/*_R1_001.fastq.gz > input.fofn
+ls ./genomic_data/10x/*.fastq.gz > input.fofn
 LINES=`wc -l input.fofn | awk '{print $1}'`
 
 for i in $(seq 1 $LINES)

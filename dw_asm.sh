@@ -17,5 +17,5 @@ wget --no-check-certificate ${URL}
 
 ##NOTE:
     ##change to wget ${URL} correct?
-gunzip *.fna.gz
+#gunzip *.fna.gz
  

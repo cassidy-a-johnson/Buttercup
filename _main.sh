@@ -8,5 +8,5 @@ num_files=$(wc -l ${1} | awk '{print $1}')
 echo $num_files
 
 ##sbatch
-##sbatch --partition=vgl --nodes=8 dw_QV.sh ${1}
+sbatch --partition=vgl --thread-spec=32 --nodes=8 $STORE/bin/Merqury_QV_slurm/dw_QV.sh ${1}
     ##ASK GIULIO IF ANYTHING ELSE IS NEEDED
