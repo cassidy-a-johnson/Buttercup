@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LINE=($(sed -n  ${SLURM_ARRAY_TASK_ID}p ${1}))
+LINE=($(sed -n  ${SLURM_ARRAY_TASK_ID}p < /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/genomes.ls[store]))
  
 echo $LINE
 NAME=${LINE[0]}

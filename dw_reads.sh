@@ -14,7 +14,7 @@ mkdir -p ./genomic_data/10x ./genomic_data/illumina ./genomic_data/pacbio_hifi
 #10x:
 echo "/
 sbatch --partition=vgl aws s3 cp --no-sign-request --recursive --exclude '*' --include *R1*.fastq.gz --include *R2*.fastq.gz s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ${ID}/genomic_data/10x | awk '{print $4}' > job.id"
-sbatch --partition=vgl aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1*.fastq.gz" --include "*R2*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ${ID}/genomic_data/10x | awk '{print $4}' > job.id
+sbatch --partition=vgl aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1*.fastq.gz" --include "*R2*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ${ID}/genomic_data/10x > joob.id
 
 #illumina:
 echo "/

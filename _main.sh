@@ -3,10 +3,14 @@
 ##THIS IS THE DOCUMENT WHERE I WILL SBATCH THE DW_QV.SH SCRIPT
 
 ##how lines are in the input file? should 1> the number of species entries
-num_files=$(wc -l ${1} | awk '{print $1}')
+
+INPUTFILE=$1
+num_files=$(wc -l ${INPUTFILE} | awk '{print $1}')
 
 echo $num_files
 
-##sbatch
-sbatch --partition=vgl --thread-spec=32 --nodes=8 $STORE/bin/Merqury_QV_slurm/dw_QV.sh ${1}
-    ##ASK GIULIO IF ANYTHING ELSE IS NEEDED
+echo "\
+sbatch --partition=vgl --array=1-${num_files} --thread-spec=32 --nodes=8 $STORE/bin/Merqury_QV_slurm/dw_QV.sh ${INPUTFILE}"
+sbatch --partition=vgl --array=1-${num_files} --thread-spec=32 --nodes=8 $STORE/bin/Merqury_QV_slurm/dw_QV.sh ${INPUTFILE}
+
+#while read SPECIES ; do sh script.sh ${SPECIES} ; done < genomes.ls
