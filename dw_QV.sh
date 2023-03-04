@@ -28,15 +28,15 @@ echo "Downloading raw reads."
 #10x:
 echo "/
 sbatch --partition=vgl --wait --job-name=aws_10x --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1*.fastq.gz" --include "*R2*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ./genomic_data/10x | awk '{printf $4 ", "}' >> 10x.id"
-sbatch --partition=vgl --wait aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1*.fastq.gz" --include "*R2*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ./genomic_data/10x | awk '{printf $4 ", "}' >> 10x.id
+sbatch --partition=vgl --wait --job-name=aws_10x --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1*.fastq.gz" --include "*R2*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ./genomic_data/10x | awk '{printf $4 ", "}' >> 10x.id
 #illumina:
 echo "/
 sbatch --partition=vgl --wait --job-name=aws_illumina --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1.fastq.gz" --include "*R2.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/illumina/ ./genomic_data/illumina | awk '{printf $4 ", "}' >> illumina.id"
-sbatch --partition=vgl --wait aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1.fastq.gz" --include "*R2.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/illumina/ ./genomic_data/illumina | awk '{printf $4 ", "}' >> illumina.id
+sbatch --partition=vgl --wait --job-name=aws_illumina --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1.fastq.gz" --include "*R2.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/illumina/ ./genomic_data/illumina | awk '{printf $4 ", "}' >> illumina.id
 #pacbio_hifi:
 echo "/
 sbatch --partition=vgl --wait --job-name=aws_pacbiohifi --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*.fastq.gz" --include "*.fastq" s3://genomeark/species/${NAME}/${ID}/genomic_data/pacbio_hifi/ ./genomic_data/pacbio_hifi | awk '{printf $4}' >> hifi.id"
-sbatch --partition=vgl --wait aws s3 cp --no-sign-request --recursive --exclude '*' --include "*.fastq.gz" --include "*.fastq" s3://genomeark/species/${NAME}/${ID}/genomic_data/pacbio_hifi/ ./genomic_data/pacbio_hifi | awk '{printf $4}' >> hifi.id
+sbatch --partition=vgl --wait --job-name=aws_pacbiohifi --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*.fastq.gz" --include "*.fastq" s3://genomeark/species/${NAME}/${ID}/genomic_data/pacbio_hifi/ ./genomic_data/pacbio_hifi | awk '{printf $4}' >> hifi.id
 
 sbatch --partition=vgl --wait --job-name=cat_to_jobid --output=%x.out --dependency="afterany:10x.id,illumina.id,hifi.id" --wrap="cat 10x.id illumina.id hifi.id" >> job.id
 
