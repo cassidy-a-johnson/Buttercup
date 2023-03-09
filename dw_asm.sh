@@ -1,5 +1,7 @@
 #!/bin/bash
 
+##This script downloads the assmeblies of species in the input file by URL (FTP)
+
 LINE=($(sed -n  ${SLURM_ARRAY_TASK_ID}p ${1}))
  
 echo $LINE
@@ -11,11 +13,4 @@ mkdir -p ${ID}
 cd ${ID}
 
 ##upload the assemblies:
-##wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/929/443/795/GCF_929443795.1_bAccGen1.1/GCF_929443795.1_bAccGen1.1_genomic.fna.gz
-
-wget --no-check-certificate ${URL} 
-
-##NOTE:
-    ##change to wget ${URL} correct?
-#gunzip *.fna.gz
- 
+wget --no-check-certificate ${URL}

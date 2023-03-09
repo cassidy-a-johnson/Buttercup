@@ -1,6 +1,7 @@
 #!/bin/bash
 
-##This document holds the scripts to download the species genomes, raw reads, run Meryl and Merqury, and organize outputs.
+##This program contains scripts to download the species genomes, raw reads, run Meryl and Merqury, and organize outputs.
+##BUTTERCUP
 
 
 ##Genomes download:
@@ -27,7 +28,7 @@ echo "Downloading raw reads."
 
 #10x:
 echo "/
-sbatch --partition=vgl --wait --job-name=aws_10x --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1*.fastq.gz" --include "*R2*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ./genomic_data/10x | awk '{printf $4 ", "}' >> 10x.id"
+#sbatch --partition=vgl --wait --job-name=aws_10x --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1*.fastq.gz" --include "*R2*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ./genomic_data/10x | awk '{printf $4 ", "}' >> 10x.id"
 sbatch --partition=vgl --wait --job-name=aws_10x --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1*.fastq.gz" --include "*R2*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ./genomic_data/10x | awk '{printf $4 ", "}' >> 10x.id
 #illumina:
 echo "/

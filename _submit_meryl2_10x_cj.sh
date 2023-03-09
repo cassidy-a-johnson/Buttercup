@@ -1,5 +1,8 @@
 #!/bin/bash
 
+##Edited version of _submit_meryl2_10x.sh in VGP_PIPELINE
+##Changed the path of input for input.fofn
+
 echo "Trim barcodes off from 10X reads and build meryl dbs"
 if [[ -z $1 ]] || [[ -z $2 ]]; then
     echo "Usage: ./_submit_meryl2_10x.sh <k-size> <out_prefix> <partition> <cpus> [extra]"
