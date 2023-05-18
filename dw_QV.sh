@@ -141,25 +141,25 @@ sbatch --partition=vgl --nice --exclude=node[141-165] --job-name=rm_meryl_etc --
 
 ##Summary:
 Species_summary_list () {
-    echo && cat *Merqury.qv >> ../Summary_QV.file
-if find 10x -maxdepth 0
+if test -n "$(find ${ID}_10x_Merqury.qv -maxdepth 0)"
 then
+  echo && cat ${ID}_10x_Merqury.qv >> ../Summary_QV.file
     truncate -s-1 ../Summary_QV.file
     echo -n "   10x    ${ID}" >> ../Summary_QV.file
 fi
-if find Pacbio_hifi -maxdepth 0
+if test -n "$(find ${ID}_hifi_Merqury.qv -maxdepth 0)"
 then
+  echo && cat ${ID}_hifi_Merqury.qv >> ../Summary_QV.file
     truncate -s-1 ../Summary_QV.file
     echo -n "   Pacbio_hifi    ${ID}" >> ../Summary_QV.file
 fi
-if find Illumina -maxdepth 0
+if test -n "$(find ${ID}_illumina_Merqury.qv -maxdepth 0)"
 then
+  echo && cat ${ID}_illumina_Merqury.qv >> ../Summary_QV.file
     truncate -s-1 ../Summary_QV.file
     echo -n "   Illumina    ${ID} " >> ../Summary_QV.file
 fi
 }
-
-##i feel like this could also be a for loop tho...
 
 Species_summary_list
 echo "Summary data loaded to table."

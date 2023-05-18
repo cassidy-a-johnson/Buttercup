@@ -1,27 +1,26 @@
 #!/bin/bash
 
 #Function: to create summary list of species and QV values among other features
-
 Species_summary_list () {
-    echo && cat *Merqury.qv >> ../Summary_QV.file
-if find 10x -maxdepth 0; then
+if test -n "$(find ${ID}_10x_Merqury.qv -maxdepth 0)"
+then
+  echo && cat ${ID}_10x_Merqury.qv >> ../Summary_QV.file
     truncate -s-1 ../Summary_QV.file
-    echo -n "   10x " >> ../Summary_QV.file
-    cat *Merqury.qv | head -n1 | awk '{print $1;}'| cut -d'_' -f 3 | cut -d '.' -f 1 >> ../Summary_QV.file
-else echo "Not a 10x species."
+    echo -n "   10x    ${ID}" >> ../Summary_QV.file
 fi
-if find ./Illumina -empty; then
+if test -n "$(find ${ID}_hifi_Merqury.qv -maxdepth 0)"
+then
+  echo && cat ${ID}_hifi_Merqury.qv >> ../Summary_QV.file
     truncate -s-1 ../Summary_QV.file
-    echo -n "   Illumina " >> ../Summary_QV.file
-    cat *Merqury.qv | head -n1 | awk '{print $1;}'| cut -d'_' -f 3 | cut -d '.' -f 1 >> ../Summary_QV.file
-else echo "Not an Illumina species."
+    echo -n "   Pacbio_hifi    ${ID}" >> ../Summary_QV.file
 fi
-if find ./Pacbio_hifi -maxdepth 0; then
+if test -n "$(find ${ID}_illumina_Merqury.qv -maxdepth 0)"
+then
+  echo && cat ${ID}_illumina_Merqury.qv >> ../Summary_QV.file
     truncate -s-1 ../Summary_QV.file
-    echo -n "   Pacbio_hifi " >> ../Summary_QV.file
-    cat *Merqury.qv | head -n1 | awk '{print $1;}'| cut -d'_' -f 3 | cut -d '.' -f 1 >> ../Summary_QV.file
-else echo "Not a Pacbio hifi species."
+    echo -n "   Illumina    ${ID} " >> ../Summary_QV.file
 fi
 }
 
 Species_summary_list
+echo "Summary data loaded to table."
