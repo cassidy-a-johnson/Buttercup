@@ -1,82 +1,165 @@
 #!/bin/bash
 
-##This program contains scripts to download the species genomes, raw reads, run Meryl and Merqury, and organize outputs.
 ##BUTTERCUP
 
+##This program is designed to download the assembly and genomic data of a species, then calculate the QV (Quality Value) score 
+##      of the species assembly using Meryl and Merqury and organizes outputs.
 
-##Genomes download:
+
+
 LINE=($(sed -n  ${SLURM_ARRAY_TASK_ID}p ${1}))
  
+##creating variables for each tab of the input table to be used throughout the program
 echo $NAME
 echo $ID
 NAME=${LINE[0]}
-ID=${LINE[1]}
+#ID=${LINE[1]}
+echo $TITLE
+TITLE=${LINE[1]}
+ID=($(printf $TITLE | cut -d'_' -f 3 | cut -d'.' -f 1))
 URL=${LINE[2]}
+#PARTITION=${LINE[3]}
+#echo $PARTITION
 
-mkdir -p ${ID}
-cd ${ID}
+#mkdir -p ${ID}
+#cd ${ID}
 
+##if there are paternal and maternal haplotypes, I recommend using titles such as bGalGal1.pat to keep track of species samples
+mkdir -p ${TITLE}
+cd ${TITLE}
+
+##Assembly download:
 echo "/
-sbatch --partition=vgl --job-name=asm --output=%.out --wrap="wget --no-check-certificate ${URL}""
-sbatch --partition=vgl --job-name=asm --output=%x.out --wrap="wget --no-check-certificate ${URL}"
+sbatch --partition=vgl --nice --exclude=node[141-165] --job-name=asm --output=%x_%A.out --wrap="wget --no-check-certificate ${URL}""
+sbatch --partition=vgl --nice --exclude=node[141-165] --job-name=asm --output=%x_%A.out --wrap="wget --no-check-certificate ${URL}"
 echo "Assembly downloaded."
 
 
-##Raw reads download:
-mkdir -p ./genomic_data/10x ./genomic_data/illumina ./genomic_data/pacbio_hifi
-echo "Downloading raw reads."
+##Genomic data download:
+mkdir -p ./genomic_data/10x ./genomic_data/pacbio_hifi ./genomic_data/illumina
+echo "Downloading genomic data."
 
 #10x:
 echo "/
-#sbatch --partition=vgl --wait --job-name=aws_10x --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1*.fastq.gz" --include "*R2*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ./genomic_data/10x | awk '{printf $4 ", "}' >> 10x.id"
-sbatch --partition=vgl --wait --job-name=aws_10x --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1*.fastq.gz" --include "*R2*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ./genomic_data/10x | awk '{printf $4 ", "}' >> 10x.id
-#illumina:
-echo "/
-sbatch --partition=vgl --wait --job-name=aws_illumina --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1.fastq.gz" --include "*R2.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/illumina/ ./genomic_data/illumina | awk '{printf $4 ", "}' >> illumina.id"
-sbatch --partition=vgl --wait --job-name=aws_illumina --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1.fastq.gz" --include "*R2.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/illumina/ ./genomic_data/illumina | awk '{printf $4 ", "}' >> illumina.id
+sbatch --partition=vgl --nice --exclude=node[141-165] --thread-spec=8 --job-name=aws_10x --output=%x_%A.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1*.fastq.gz" --include "*R2*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ./genomic_data/10x | awk '{print $4}' >> 10x.id"
+sbatch --partition=vgl --nice --exclude=node[141-165] --thread-spec=8 --job-name=aws_10x --output=%x_%A.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1*.fastq.gz" --include "*R2*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/10x/ ./genomic_data/10x | awk '{print $4}' >> 10x.id
 #pacbio_hifi:
 echo "/
-sbatch --partition=vgl --wait --job-name=aws_pacbiohifi --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*.fastq.gz" --include "*.fastq" s3://genomeark/species/${NAME}/${ID}/genomic_data/pacbio_hifi/ ./genomic_data/pacbio_hifi | awk '{printf $4}' >> hifi.id"
-sbatch --partition=vgl --wait --job-name=aws_pacbiohifi --output=%x.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*.fastq.gz" --include "*.fastq" s3://genomeark/species/${NAME}/${ID}/genomic_data/pacbio_hifi/ ./genomic_data/pacbio_hifi | awk '{printf $4}' >> hifi.id
+sbatch --partition=vgl --nice --exclude=node[141-165] --thread-spec=8 --job-name=aws_pacbiohifi --output=%x_%A.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*.fastq.gz" --include "*.fastq" s3://genomeark/species/${NAME}/${ID}/genomic_data/pacbio_hifi/ ./genomic_data/pacbio_hifi | awk '{print $4}' >> hifi.id"
+sbatch --partition=vgl --nice --exclude=node[141-165] --thread-spec=8 --job-name=aws_pacbiohifi --output=%x_%A.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*.fastq.gz" --include "*.fastq" s3://genomeark/species/${NAME}/${ID}/genomic_data/pacbio_hifi/ ./genomic_data/pacbio_hifi | awk '{print $4}' >> hifi.id
+#illumina:
+echo "/
+sbatch --partition=vgl --nice --exclude=node[141-165] --thread-spec=8 --job-name=aws_illumina --output=%x_%A.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1.fastq.gz" --include "*R2.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/illumina/ ./genomic_data/illumina | awk '{print $4}' >> illumina.id"
+sbatch --partition=vgl --nice --exclude=node[141-165] --thread-spec=8 --job-name=aws_illumina --output=%x_%A.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*R1.fastq.gz" --include "*R2.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/illumina/ ./genomic_data/illumina | awk '{print $4}' >> illumina.id
 
-sbatch --partition=vgl --wait --job-name=cat_to_jobid --output=%x.out --dependency="afterany:10x.id,illumina.id,hifi.id" --wrap="cat 10x.id illumina.id hifi.id" >> job.id
+cat 10x.id hifi.id illumina.id >> jobs.id
 
-echo"/
-sbatch --partition=vgl --wait --job-name=reads_check --output=%x.out --wrap="sh /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/dw_reads_check.sh""
-sbatch --partition=vgl --wait --job-name=reads_check --output=%x.out --wrap="sh /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/dw_reads_check.sh"
+job_nums=`wc -l jobs.id | awk '{print $1}'`
+
+if [[ $job_nums -eq 1 ]]
+then
+   jid=`cat jobs.id`
+   WAIT=$WAIT$jid
+else
+    for jid in $(cat jobs.id)
+    do
+        WAIT=$WAIT$jid","
+    done
+    WAIT=${WAIT::-1}
+fi
+
+##waiting until all aws download jobs are done to check for genomic data
+
+echo "/
+sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:$WAIT --job-name=reads_check --output=%x_%A.out --wrap=\"sh /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/dw_reads_check.sh\" | awk '{print $4}' > check.id"
+sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:$WAIT --job-name=reads_check --output=%x_%A.out --wrap="sh /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/dw_reads_check.sh" | awk '{print $4}' > check.id
+
 
 ##Meryl:
 mkdir -p meryl
 echo "Running Meryl."
 echo "/
-sbatch --partition=vgl --wait --thread-spec=32 --job-name=Meryl --output=%x.out $STORE/bin/Merqury_QV_slurm/meryl_data_type.sh"
-sbatch --partition=vgl --wait --thread-spec=32 --job-name=Meryl --output=%x.out $STORE/bin/Merqury_QV_slurm/meryl_data_type.sh
+sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat check.id` --thread-spec=1 --job-name=Meryl --output=%x_%A.out $STORE/bin/Merqury_QV_slurm/meryl_data_type.sh"
+sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat check.id` --thread-spec=1 --job-name=Meryl --output=%x_%A.out $STORE/bin/Merqury_QV_slurm/meryl_data_type.sh
 
+for DATATYPE in 10x hifi illumina
+do
+MERYL=${DATATYPE}_meryl.jid
+SUMMARY=summary_${DATATYPE}.meryl
+  if 
+    test -n "$(find ${MERYL} -maxdepth 0)" 
+  then
+    
+    wait_output() {
+    local output="$1"; shift
 
-##Merqury:
-wait_output() {
-  local output="$1"; shift
-
-  until [ -d $output ] ; do sleep 300; done
-  
+    until [ -d $output ] 
+    do sleep 300
+    done
 }
-wait_output ./summary.meryl
+    wait_output ${SUMMARY}
+    echo "${MERYL} has been generated."
+  else
+    echo "${DATATYPE} is not present."
+  fi
+done
 
+
+#Merqury:
 echo "Running Merqury."
-echo "/
-sbatch --partition=vgl --wait --thread-spec=32 --job-name=Merqury --output=%x.out --dependency="afterok:$(cat transformer.id)" /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/qv.sh summary.meryl *.fna.gz ${ID}_Merqury | awk '{print $4}' > Merqury.jid"
-sbatch --partition=vgl --wait --thread-spec=32 --job-name=Merqury --output=%x.out --dependency="afterok:$(cat transformer.id)" /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/qv.sh summary.meryl *.fna.gz ${ID}_Merqury | awk '{print $4}' > Merqury.jid
 
+cat 10x_meryl.jid hifi_meryl.jid illumina_meryl.jid >> meryl_jid.list
+
+for DATATYPE in 10x hifi illumina
+do
+  SUMMARY=summary_${DATATYPE}.meryl
+  OUTPUT=${ID}_${DATATYPE}_Merqury
+  JID=Merqury_${DATATYPE}.jid
+  DATA=/genomic_data/${DATATYPE}/
+  if
+   echo test -n "${DATA} -maxdepth 0 -empty)"
+  then
+    continue
+  else
+    echo "/
+    sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat meryl.list` --thread-spec=18 --job-name=Merqury --output=%x_%A.out /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/qv.sh ${SUMMARY} *.fna.gz ${OUTPUT} | awk '{print $4}' >> ${JID}"
+    sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat meryl.list` --thread-spec=18 --job-name=Merqury --output=%x_%A.out /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/qv.sh ${SUMMARY} *.fna.gz ${OUTPUT} | awk '{print $4}' >> ${JID}
+  fi
+done
+
+cat Merqury_10x.jid Merqury_hifi.jid Merqury_illumina.jid >> Merqury.jid
+
+
+##Cleaning
 echo "Cleaning unnecessary files."
-sbatch --partition=vgl --wait --job-name=rm_genomic_data --output=%x.out --dependency="afterok:$(cat transformer.id)" --wrap="rm -dfrv ./genomic_data/"
+sbatch --partition=vgl --nice --exclude=node[141-165] --job-name=rm_genomic_data --output=%x_%A.out --dependency="afterok:$(cat Merqury.jid)" --wrap="rm -dfrv ./genomic_data/"
 
-sbatch --partition=vgl --wait --job-name=mv_meryl --output=%x.out --dependency="afterok:$(cat transformer.id)" --wrap="mv logs ./meryl/; mv *.jid ./meryl/; mv *.meryl.hist ./meryl/; mv *.meryl.list ./meryl/"
+sbatch --partition=vgl --nice --exclude=node[141-165] --job-name=mv_meryl --output=%x_%A.out --dependency="afterok:$(cat Merqury.jid)" --wrap="mv *.meryl.hist ./meryl/; mv *.meryl.list ./meryl/"
 
-sbatch --partition=vgl --wait --job-name=rm_meryl_etc --output=%x.out --dependency="afterok:$(cat transformer.id)" --wrap="rm -dfrv ./meryl/; rm -frdv *.meryl; rm *.dat; rm *.fastq.gz; rm *fna.gz"
+sbatch --partition=vgl --nice --exclude=node[141-165] --job-name=rm_meryl_etc --output=%x_%A.out --dependency="afterok:$(cat Merqury.jid)" --wrap="rm -dfrv ./meryl/; rm -frdv *.meryl; rm *.dat; rm *.fastq.gz; rm *fna.gz"
 
 
 ##Summary:
-echo "/
-sbatch --partition=vgl --wait --job-name=Summary_generation --output=%x.out --wrap="sh /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/Species_summary_list.sh""
-sbatch --partition=vgl --wait --job-name=Summary_generation --output=%x.out --wrap="sh /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/Species_summary_list.sh"
+Species_summary_list () {
+    echo && cat *Merqury.qv >> ../Summary_QV.file
+if find 10x -maxdepth 0
+then
+    truncate -s-1 ../Summary_QV.file
+    echo -n "   10x    ${ID}" >> ../Summary_QV.file
+fi
+if find Pacbio_hifi -maxdepth 0
+then
+    truncate -s-1 ../Summary_QV.file
+    echo -n "   Pacbio_hifi    ${ID}" >> ../Summary_QV.file
+fi
+if find Illumina -maxdepth 0
+then
+    truncate -s-1 ../Summary_QV.file
+    echo -n "   Illumina    ${ID} " >> ../Summary_QV.file
+fi
+}
+
+##i feel like this could also be a for loop tho...
+
+Species_summary_list
 echo "Summary data loaded to table."

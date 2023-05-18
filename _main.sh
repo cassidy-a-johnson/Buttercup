@@ -13,5 +13,15 @@ num_files=$(wc -l ${INPUTFILE} | awk '{print $1}')
 echo $num_files
 
 echo "\
-sbatch --partition=vgl --nice --array=1-${num_files} --thread-spec=32 --nodes=8 $STORE/bin/Merqury_QV_slurm/dw_QV.sh ${INPUTFILE}"
-sbatch --partition=vgl --nice --array=1-${num_files} --thread-spec=32 --nodes=8 $STORE/bin/Merqury_QV_slurm/dw_QV.sh ${INPUTFILE}
+sbatch --partition=vgl --nice --array=1-${num_files}%1 --thread-spec=1 --exclude=node[141-165] $STORE/bin/Merqury_QV_slurm/dw_QV.sh ${INPUTFILE}"
+sbatch --partition=vgl --nice --array=1-${num_files}%1 --thread-spec=1 --exclude=node[141-165] $STORE/bin/Merqury_QV_slurm/dw_QV.sh ${INPUTFILE}
+
+
+
+##3/22/23
+##in order to limit how many jobs [genomes] in the array run at any given time:
+##use the sbatch option --array
+    # --array=1-150%5
+        #run jobs 1-150 in an array, only running 5 at a time
+    ##QUESTION: if i'm now limiting how many jobs run at once, do i still need to limit the nodes?
+        #currently restricted to 5 nodes.
