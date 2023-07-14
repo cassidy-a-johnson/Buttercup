@@ -1,5 +1,7 @@
 #!/bin/bash
 
+date -u >> merqury_startdate.out
+
 if [[ "$#" -lt 3 ]]; then
         echo "Usage: ./qv.sh <read.meryl> <asm1.fasta> [asm2.fasta] <out>"
         echo

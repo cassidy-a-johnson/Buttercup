@@ -15,5 +15,5 @@ fi
 ##3/22/23
 if find fail.out -maxdepth 0
 then
-    exit
+    echo "oops!!"
 fi

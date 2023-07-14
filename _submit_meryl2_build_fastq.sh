@@ -2,6 +2,7 @@
 
 #Edited version of _submit_meryl2_build.sh in  VGPPIPELINE  
 ##Inclusion of fastq as accepted input
+date >> meryl_startdate.out
 
 if [ -z $1 ]; then
     echo "Usage: ./_submit_meryl2_build.sh <k-size> <input.fofn> <out_prefix> <partition> [extra]"
@@ -48,8 +49,8 @@ do
         arr_max=1000
     fi
     echo "\
-    sbatch -J $name --partition=$partition --cpus-per-task=$cpus -D $path $extra --array=1-$arr_max --time=$walltime --error=$log --output=$log $script $args"
-    sbatch -J $name --partition=$partition --cpus-per-task=$cpus -D $path $extra --array=1-$arr_max --time=$walltime --error=$log --output=$log $script $args >> meryl_count.jid
+    time sbatch -J $name --partition=$partition --cpus-per-task=$cpus -D $path $extra --array=1-$arr_max --time=$walltime --error=$log --output=$log $script $args"
+    time sbatch -J $name --partition=$partition --cpus-per-task=$cpus -D $path $extra --array=1-$arr_max --time=$walltime --error=$log --output=$log $script $args >> meryl_count.jid
 done
 
 # Wait for these jobs
@@ -88,8 +89,8 @@ name=meryl_union_sum
 script=$meryl_count/meryl2_union_sum.sh
 args="$k meryl_count.meryl.list $out_prefix"
 echo "\
-sbatch -J $name --partition=$partition --cpus-per-task=$cpus -D $path --dependency=$WAIT --time=$walltime --error=$log --output=$log $script $args"
-sbatch -J $name --partition=$partition --cpus-per-task=$cpus -D $path --dependency=$WAIT --time=$walltime --error=$log --output=$log $script $args > meryl_union_sum.jid
+time sbatch -J $name --partition=$partition --cpus-per-task=$cpus -D $path --dependency=$WAIT --time=$walltime --error=$log --output=$log $script $args"
+time sbatch -J $name --partition=$partition --cpus-per-task=$cpus -D $path --dependency=$WAIT --time=$walltime --error=$log --output=$log $script $args > meryl_union_sum.jid
 
 WAIT="afterok:"`cat meryl_union_sum.jid | tail -n 1 | cut -d' ' -f4`
 
@@ -99,5 +100,6 @@ log=logs/$name.%A_%a.log
 script=$VGP_PIPELINE/meryl2/genomescope.sh
 args="$k $out_prefix"
 echo "\
-sbatch -J $name --partition=$partition --cpus-per-task=$cpus -D $path --dependency=$WAIT --time=$walltime --error=$log --output=$log $script $args"
-sbatch -J $name --partition=$partition --cpus-per-task=$cpus -D $path --dependency=$WAIT --time=$walltime --error=$log --output=$log $script $args
+time sbatch -J $name --partition=$partition --cpus-per-task=$cpus -D $path --dependency=$WAIT --time=$walltime --error=$log --output=$log $script $args | date >> enddate.out"
+time sbatch -J $name --partition=$partition --cpus-per-task=$cpus -D $path --dependency=$WAIT --time=$walltime --error=$log --output=$log $script $args | date >> enddate.out
+
