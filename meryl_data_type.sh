@@ -27,8 +27,6 @@ else
     echo "/sbatch --partition=vgl --exclude=node[141-165]  --nice /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/_submit_meryl2_build_fastq.sh 21 R.fofn summary_pacbio_hifi vgl | awk '{print $4}' >> pacbio_hifi_meryl.jid"
            sbatch --partition=vgl --exclude=node[141-165]  --nice /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/_submit_meryl2_build_fastq.sh 21 R.fofn summary_pacbio_hifi vgl | awk '{print $4}' >> pacbio_hifi_meryl.jid 
 fi  
-pacbio_hifi_meryl.jid
-pacbio_hifi_meryl.jid
 
 #Illumina
  if test -n "$(find ./genomic_data/illumina/ -maxdepth 0  -empty)" 

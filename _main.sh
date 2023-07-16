@@ -16,8 +16,8 @@ echo $num_files
 #sbatch --partition=vgl --nice --array=1-${num_files}%1 --thread-spec=1 --exclude=node[141-165] $STORE/bin/Merqury_QV_slurm/dw_QV.sh ${INPUTFILE}"
 #sbatch --partition=vgl --nice --array=1-${num_files}%5 --thread-spec=1 --exclude=node[141-165] $STORE/bin/Merqury_QV_slurm/dw_QV.sh ${INPUTFILE}
 echo "\
-sbatch --partition=vgl --nice --array=1-${num_files}%2 --thread-spec=1 --exclude=node[141-165] /lustre/fs5/vgl/store/cjohnson02/bin/Merqury_QV_slurm/buttercup_dw_QV.sh ${INPUTFILE}"
-sbatch --partition=vgl --nice --array=1-${num_files}%2 --thread-spec=1 --exclude=node[141-165] /lustre/fs5/vgl/store/cjohnson02/bin/Merqury_QV_slurm/buttercup_dw_QV.sh ${INPUTFILE}
+sbatch --partition=vgl --nice --array=1-${num_files}%3 --thread-spec=1 --exclude=node[141-165] /lustre/fs5/vgl/store/cjohnson02/bin/Merqury_QV_slurm/buttercup_dw_QV.sh ${INPUTFILE}"
+sbatch --partition=vgl --nice --array=1-${num_files}%3 --thread-spec=1 --exclude=node[141-165] /lustre/fs5/vgl/store/cjohnson02/bin/Merqury_QV_slurm/buttercup_dw_QV.sh ${INPUTFILE}
 
 
 ##3/22/23

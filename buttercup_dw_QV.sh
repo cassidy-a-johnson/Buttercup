@@ -51,7 +51,7 @@ sbatch --partition=vgl --nice --exclude=node[141-165] --thread-spec=8 --job-name
 #illumina:
 echo "\
 sbatch --partition=vgl --nice --exclude=node[141-165] --thread-spec=8 --job-name=aws_illumina --output=%x_%A.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/illumina/ ./genomic_data/illumina | awk '{print $4}' >> illumina.id"
-sbatch --partition=vgl --nice --exclude=node[141-165] --thread-spec=8 --job-name=aws_illumina --output=%x_%A.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*.fastq.gz" s3://genomeark/species/Scomber_japonicus/fScoJap1/genomic_data/illumina/ ./genomic_data/illumina | awk '{print $4}' >> illumina.id
+sbatch --partition=vgl --nice --exclude=node[141-165] --thread-spec=8 --job-name=aws_illumina --output=%x_%A.out aws s3 cp --no-sign-request --recursive --exclude '*' --include "*.fastq.gz" s3://genomeark/species/${NAME}/${ID}/genomic_data/illumina/ ./genomic_data/illumina | awk '{print $4}' >> illumina.id
 
 cat 10x.id hifi.id illumina.id >> jobs.id
 
@@ -89,7 +89,7 @@ wait_output() {
 ##Meryl & Merqury:
 mkdir -p meryl
 
-for DATATYPE in 10x illumina
+for DATATYPE in 10x pacbio_hifi illumina
 do
 MERYL=${DATATYPE}_meryl.jid
 SUMMARY=summary_${DATATYPE}.meryl
@@ -103,7 +103,6 @@ then
   echo "\
     sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat check.id` --thread-spec=1 --job-name=Meryl --output=%x_%A.out $STORE/bin/Merqury_QV_slurm/meryl_data_type.sh"
     sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat check.id` --thread-spec=1 --job-name=Meryl --output=%x_%A.out $STORE/bin/Merqury_QV_slurm/meryl_data_type.sh
-    ##i've removed the dependency, remember to put it back!!!
     wait_output ${SUMMARY}
     echo "${MERYL} and ${SUMMARY} have been generated."
 cat 10x_meryl.jid pacbio_hifi_meryl.jid illumina_meryl.jid >> meryl_jid.list
