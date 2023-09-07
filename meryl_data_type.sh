@@ -2,6 +2,16 @@
 
 ##This program runs Meryl, differentiating between the genomic data types Illumina, Pacbio Hifi, and 10x)
 
+##Wait function for output files:
+wait_output() {
+    local output="$1"; shift
+
+    until [ -d $output ] 
+    do echo "We are sleeping until the summary file is generated. 5 more minutes."; sleep 300
+    done  
+}
+
+
 ##Determining whether the genomic data directory has reads or not (by type)
 #10x
  if test -n "$(find ./genomic_data/10x/ -empty)"
@@ -14,6 +24,7 @@ else
         echo "/
         sbatch --partition=vgl --exclude=node[141-165] --nice $STORE/bin/Merqury_QV_slurm/_submit_meryl2_10x_cj.sh 21 summary_10x vgl 32 | awk '{print $4}' >> 10x_meryl.jid"
         sbatch --partition=vgl --exclude=node[141-165] --nice $STORE/bin/Merqury_QV_slurm/_submit_meryl2_10x_cj.sh 21 summary_10x vgl 32 | awk '{print $4}' >> 10x_meryl.jid
+wait_output summary_10x.meryl
 fi
 
 #Pacbio Hifi
@@ -26,6 +37,7 @@ else
     ls ./genomic_data/pacbio_hifi/*.fastq* >> R.fofn
     echo "/sbatch --partition=vgl --exclude=node[141-165]  --nice /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/_submit_meryl2_build_fastq.sh 21 R.fofn summary_pacbio_hifi vgl | awk '{print $4}' >> pacbio_hifi_meryl.jid"
            sbatch --partition=vgl --exclude=node[141-165]  --nice /rugpfs/fs0/vgl/store/cjohnson02/bin/Merqury_QV_slurm/_submit_meryl2_build_fastq.sh 21 R.fofn summary_pacbio_hifi vgl | awk '{print $4}' >> pacbio_hifi_meryl.jid 
+wait_output summary_pacbio_hifi.meryl
 fi  
 
 #Illumina
@@ -38,4 +50,5 @@ else
     ls ./genomic_data/illumina/*.fastq.gz >> R1_R2.fofn
     echo "sbatch --partition=vgl --exclude=node[141-165] --nice $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R1_R2.fofn summary_illumina vgl | awk '{print $4}' >> illumina_meryl.jid"
           sbatch --partition=vgl --exclude=node[141-165] --nice $VGP_PIPELINE/meryl2/_submit_meryl2_build.sh 21 R1_R2.fofn summary_illumina vgl | awk '{print $4}' >> illumina_meryl.jid
+wait_output summary_illumina.meryl
 fi
