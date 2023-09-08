@@ -6,7 +6,6 @@
 ##      of the species assembly using Meryl and Merqury and organizes outputs.
 
 
-
 LINE=($(sed -n  ${SLURM_ARRAY_TASK_ID}p ${1}))
  
 NAME=${LINE[0]}
@@ -27,6 +26,15 @@ echo $URL
 ##if there are paternal and maternal haplotypes, I recommend using titles such as bGalGal1.pat to keep track of species samples
 mkdir -p ${TITLE}
 cd ${TITLE}
+
+##Wait function for output files:
+wait_output() {
+    local output="$1"; shift
+
+    until [ -f $output ] 
+    do echo "We are sleeping until $output is generated. 5 more minutes."; sleep 300
+    done  
+}
 
 
 ##Assembly download:
@@ -76,69 +84,32 @@ sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:$WAIT
 sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:$WAIT --job-name=reads_check --output=%x_%A.out --wrap="sh /lustre/fs5/vgl/store/cjohnson02/bin/Merqury_QV_slurm/dw_reads_check.sh" | awk '{print $4}' > check.id
 
 
-##Wait function for output files:
-wait_output() {
-    local output="$1"; shift
+#kreeq:
+echo "/
+sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat check.id` --job-name=kreeq --output=%x_%A.out --wrap=\"sh /lustre/fs5/vgl/store/cjohnson02/bin/Merqury_QV_slurm/kreeq_run.sh\" | awk '{print $4}' > kreeq.id"
+sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat check.id` --job-name=kreeq --output=%x_%A.out --wrap="sh /lustre/fs5/vgl/store/cjohnson02/bin/Merqury_QV_slurm/kreeq_run.sh" | awk '{print $4}' > kreeq.id
 
-    until [ -d $output ] 
-    do echo "We are sleeping until the summary file is generated. 5 more minutes."; sleep 300
-    done  
-}
+wait_output done.out
 
-
-##Meryl & Merqury:
-mkdir -p meryl
-
-for DATATYPE in 10x pacbio_hifi illumina
-do
-
-MERYL=${DATATYPE}_meryl.jid
-SUMMARY=summary_${DATATYPE}.meryl
-MERQURY=Merqury_${DATATYPE}.jid
-OUTPUT=${TITLE}_${DATATYPE}_Merqury
-DATA=genomic_data/${DATATYPE}/
-
-echo "\
-  sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat check.id` --thread-spec=1 --job-name=Meryl --output=%x_%A.out $STORE/bin/Merqury_QV_slurm/meryl_data_type.sh"
-  sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat check.id` --thread-spec=1 --job-name=Meryl --output=%x_%A.out $STORE/bin/Merqury_QV_slurm/meryl_data_type.sh
-
-if
-  test -n "$(find ./genomic_data/${DATATYPE}/ -empty)"
-then
-continue
-else
-  wait_output ${SUMMARY}
-    echo "${MERYL} and ${SUMMARY} have been generated."
-cat 10x_meryl.jid pacbio_hifi_meryl.jid illumina_meryl.jid >> meryl_jid.list
-
-  echo "\
-    sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat ${MERYL}` --thread-spec=18 --job-name=Merqury --output=%x_%A.out /lustre/fs5/vgl/store/cjohnson02/bin/Merqury_QV_slurm/qv.sh ${SUMMARY} *.fna.gz ${OUTPUT} | awk '{print $4}' >> ${MERQURY}"
-    sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat ${MERYL}` --thread-spec=18 --job-name=Merqury --output=%x_%A.out /lustre/fs5/vgl/store/cjohnson02/bin/Merqury_QV_slurm/qv.sh ${SUMMARY} *.fna.gz ${OUTPUT} | awk '{print $4}' >> ${MERQURY}
-    echo "Now running Merqury."
-    wait_output ${OUTPUT}
-    echo "${OUTPUT} has been generated."
-cat Merqury_10x.jid Merqury_pacbio_hifi.jid Merqury_illumina.jid >> Merqury.jid
-fi
-done
 
 
 ##Summary:
 Species_summary_list () {
-if test -n "$(find ${TITLE}_10x_Merqury.qv -maxdepth 0)"
+if test -n "$(find kreeq_QV_10x -maxdepth 0)"
 then
-  echo && cat ${TITLE}_10x_Merqury.qv >> ../Summary_QV.file
+  echo -n && cat kreeq_QV_10x >> ../Summary_QV.file
     truncate -s-1 ../Summary_QV.file
     echo -n "   10x    ${TITLE}" >> ../Summary_QV.file
 fi
-if test -n "$(find ${TITLE}_pacbio_hifi_Merqury.qv -maxdepth 0)"
+if test -n "$(find kreeq_QV_pacbio_hifi -maxdepth 0)"
 then
-  echo && cat ${TITLE}_pacbio_hifi_Merqury.qv >> ../Summary_QV.file
+  echo -n && cat kreeq_QV_pacbio_hifi >> ../Summary_QV.file
     truncate -s-1 ../Summary_QV.file
     echo -n "   Pacbio_hifi    ${TITLE}" >> ../Summary_QV.file
 fi
-if test -n "$(find ${TITLE}_illumina_Merqury.qv -maxdepth 0)"
+if test -n "$(find kreeq_QV_illumina -maxdepth 0)"
 then
-  echo && cat ${TITLE}_illumina_Merqury.qv >> ../Summary_QV.file
+  echo -n && cat kreeq_QV_illumina >> ../Summary_QV.file
     truncate -s-1 ../Summary_QV.file
     echo -n "   Illumina    ${TITLE} " >> ../Summary_QV.file
 fi
@@ -146,12 +117,3 @@ fi
 
 Species_summary_list
 echo "Summary data loaded to table."
-
-
-##Cleaning
-echo "Cleaning unnecessary files."
-sbatch --partition=vgl --nice --exclude=node[141-165] --job-name=rm_genomic_data --output=%x_%A.out --dependency="afterok:$(cat Merqury.jid)" --wrap="rm -dfrv ./genomic_data/"
-
-sbatch --partition=vgl --nice --exclude=node[141-165] --job-name=mv_meryl --output=%x_%A.out --dependency="afterok:$(cat Merqury.jid)" --wrap="mv *.meryl.hist ./meryl/; mv *.meryl.list ./meryl/"
-
-sbatch --partition=vgl --nice --exclude=node[141-165] --job-name=rm_meryl_etc --output=%x_%A.out --dependency="afterok:$(cat Merqury.jid)" --wrap="rm -dfrv ./meryl/; rm -frdv *.meryl; rm *.dat; rm *.fastq.gz; rm *fna.gz"

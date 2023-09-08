@@ -6,6 +6,18 @@
 ##      of the species assembly using Meryl and Merqury and organizes outputs.
 
 
+#Importantly, the kreeq database can only be computed once on the read set, 
+#and reused for multiple analyses to save runtime:
+#kreeq validate -r testFiles/random1.fastq -o db.kreeq
+#kreeq validate -f testFiles/random1.fasta -d db.kreeq
+
+#Similarly, kreeq databases can be generated separately for
+# multiple inputs and combined, with increased performance in HPC environments:
+#kreeq validate -r testFiles/random1.fastq -o random1.kreeq
+#kreeq validate -r testFiles/random2.fastq -o random2.kreeq
+
+#time kreeq union -d random1.kreeq random2.kreeq -o union.kreeq
+#time kreeq validate -f testFiles/random1.fasta -d union.kreeq
 
 LINE=($(sed -n  ${SLURM_ARRAY_TASK_ID}p ${1}))
  
@@ -76,51 +88,25 @@ sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:$WAIT
 sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:$WAIT --job-name=reads_check --output=%x_%A.out --wrap="sh /lustre/fs5/vgl/store/cjohnson02/bin/Merqury_QV_slurm/dw_reads_check.sh" | awk '{print $4}' > check.id
 
 
-##Wait function for output files:
-wait_output() {
-    local output="$1"; shift
+#kreeq:
 
-    until [ -d $output ] 
-    do echo "We are sleeping until the summary file is generated. 5 more minutes."; sleep 300
-    done  
-}
-
-
-##Meryl & Merqury:
-mkdir -p meryl
-
-for DATATYPE in 10x pacbio_hifi illumina
-do
-
-MERYL=${DATATYPE}_meryl.jid
-SUMMARY=summary_${DATATYPE}.meryl
-MERQURY=Merqury_${DATATYPE}.jid
-OUTPUT=${TITLE}_${DATATYPE}_Merqury
-DATA=genomic_data/${DATATYPE}/
-
-echo "\
-  sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat check.id` --thread-spec=1 --job-name=Meryl --output=%x_%A.out $STORE/bin/Merqury_QV_slurm/meryl_data_type.sh"
-  sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat check.id` --thread-spec=1 --job-name=Meryl --output=%x_%A.out $STORE/bin/Merqury_QV_slurm/meryl_data_type.sh
-
-if
-  test -n "$(find ./genomic_data/${DATATYPE}/ -empty)"
+if test -n "$(find ./genomic_data/10x/ -empty)"
 then
-continue
+    echo "No 10x genomic data."
 else
-  wait_output ${SUMMARY}
-    echo "${MERYL} and ${SUMMARY} have been generated."
-cat 10x_meryl.jid pacbio_hifi_meryl.jid illumina_meryl.jid >> meryl_jid.list
+time kreeq validate -r ./genomic_data/10x/*.fastq* -o 10x.kreeq 
+  ##needs to run kreeq on INDIVIDUAL READ SET; once ethis is done run union; then validate
 
-  echo "\
-    sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat ${MERYL}` --thread-spec=18 --job-name=Merqury --output=%x_%A.out /lustre/fs5/vgl/store/cjohnson02/bin/Merqury_QV_slurm/qv.sh ${SUMMARY} *.fna.gz ${OUTPUT} | awk '{print $4}' >> ${MERQURY}"
-    sbatch --partition=vgl --nice --exclude=node[141-165] --dependency=afterok:`cat ${MERYL}` --thread-spec=18 --job-name=Merqury --output=%x_%A.out /lustre/fs5/vgl/store/cjohnson02/bin/Merqury_QV_slurm/qv.sh ${SUMMARY} *.fna.gz ${OUTPUT} | awk '{print $4}' >> ${MERQURY}
-    echo "Now running Merqury."
-    wait_output ${OUTPUT}
-    echo "${OUTPUT} has been generated."
-cat Merqury_10x.jid Merqury_pacbio_hifi.jid Merqury_illumina.jid >> Merqury.jid
+time kreeq union -d 10x.kreeq -o union_10x.kreeq
+time kreeq validate -f *fna.gz -d union_10x.kreeq
 fi
-done
 
+#QUESTION: should I just make this a for loop?
+
+
+
+
+##NOTE:NEED TO CHANGE "SUMMARY" SECTION TO MATCH NEW NAMING OF OUTPUT FILES
 
 ##Summary:
 Species_summary_list () {
@@ -130,13 +116,13 @@ then
     truncate -s-1 ../Summary_QV.file
     echo -n "   10x    ${TITLE}" >> ../Summary_QV.file
 fi
-if test -n "$(find ${TITLE}_pacbio_hifi_Merqury.qv -maxdepth 0)"
+if test -n "$(find ${TITLE}_hifi_Merqury.qv -maxdepth 0)"
 then
-  echo && cat ${TITLE}_pacbio_hifi_Merqury.qv >> ../Summary_QV.file
+  echo && cat ${TITLE}_hifi_Merqury.qv >> ../Summary_QV.file
     truncate -s-1 ../Summary_QV.file
     echo -n "   Pacbio_hifi    ${TITLE}" >> ../Summary_QV.file
 fi
-if test -n "$(find ${TITLE}_illumina_Merqury.qv -maxdepth 0)"
+if test -n "$(find ${ID}_illumina_Merqury.qv -maxdepth 0)"
 then
   echo && cat ${TITLE}_illumina_Merqury.qv >> ../Summary_QV.file
     truncate -s-1 ../Summary_QV.file
@@ -147,7 +133,8 @@ fi
 Species_summary_list
 echo "Summary data loaded to table."
 
-
+##NOTE:NEED TO CHANGE "SUMMARY" SECTION TO NEW DEPENDENCY
+    ##PERHAPS A NEW DEPENDENCY ON THE SUMMARY GENERATION
 ##Cleaning
 echo "Cleaning unnecessary files."
 sbatch --partition=vgl --nice --exclude=node[141-165] --job-name=rm_genomic_data --output=%x_%A.out --dependency="afterok:$(cat Merqury.jid)" --wrap="rm -dfrv ./genomic_data/"
